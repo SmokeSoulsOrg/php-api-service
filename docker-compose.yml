@@ -23,17 +23,18 @@ services:
             - sail
         depends_on:
             - mysql
+            - mysql_read
             - redis
 #            - meilisearch
 #            - mailpit
 #            - selenium
     mysql:
-        image: 'mysql/mysql-server:8.0'
+        image: 'mysql:8.0'
         ports:
             - '${FORWARD_DB_PORT:-3306}:3306'
         environment:
             MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
-            MYSQL_ROOT_HOST: '%'
+            MYSQL_ROOT_HOST: '${DB_HOST_WRITE}'
             MYSQL_DATABASE: '${DB_DATABASE}'
             MYSQL_USER: '${DB_USERNAME}'
             MYSQL_PASSWORD: '${DB_PASSWORD}'
@@ -41,16 +42,40 @@ services:
         volumes:
             - 'sail-mysql:/var/lib/mysql'
             - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
+            - './docker/mysql/conf.d/z-replication.cnf:/etc/mysql/conf.d/z-replication.cnf'
+            - './docker/mysql/init-replica-user.sql:/docker-entrypoint-initdb.d/90-init-replica-user.sql'
         networks:
             - sail
         healthcheck:
-            test:
-                - CMD
-                - mysqladmin
-                - ping
-                - '-p${DB_PASSWORD}'
+            test: ['CMD', 'mysqladmin', 'ping', '-p${DB_PASSWORD}']
             retries: 3
             timeout: 5s
+
+    mysql_read:
+        image: 'mysql:8.0'
+        ports:
+            - '${FORWARD_DB_READ_PORT:-3307}:3306'
+        environment:
+            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+            MYSQL_ROOT_HOST: '${DB_HOST_READ}'
+            MYSQL_DATABASE: '${DB_READ_DATABASE}'
+            MYSQL_USER: '${DB_USERNAME}'
+            MYSQL_PASSWORD: '${DB_PASSWORD}'
+            MYSQL_ALLOW_EMPTY_PASSWORD: 1
+        volumes:
+            - 'sail-mysql-read:/var/lib/mysql'
+            - './docker/mysql_read/conf.d/z-replication.cnf:/etc/mysql/conf.d/z-replication.cnf'
+            - './docker/mysql_read/init-replication.sh:/docker-entrypoint-initdb.d/99-init-replication.sh'
+        networks:
+            - sail
+        healthcheck:
+            test: ['CMD', 'mysqladmin', 'ping', '-p${DB_PASSWORD}']
+            retries: 3
+            timeout: 5s
+        depends_on:
+            mysql:
+                condition: service_healthy
+
     redis:
         image: 'redis:alpine'
         ports:
@@ -60,10 +85,7 @@ services:
         networks:
             - sail
         healthcheck:
-            test:
-                - CMD
-                - redis-cli
-                - ping
+            test: ['CMD', 'redis-cli', 'ping']
             retries: 3
             timeout: 5s
 #    meilisearch:
@@ -105,6 +127,8 @@ networks:
         driver: bridge
 volumes:
     sail-mysql:
+        driver: local
+    sail-mysql-read:
         driver: local
     sail-redis:
         driver: local
