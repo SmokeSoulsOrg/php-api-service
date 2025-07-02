@@ -39,6 +39,19 @@ class UpdatePornstarRequest extends FormRequest
             'rank' => 'nullable|integer',
             'rank_premium' => 'nullable|integer',
             'rank_wl' => 'nullable|integer',
+
+            // Nested
+            'aliases' => ['array'],
+            'aliases.*.alias' => ['required', 'string'],
+
+            'thumbnails' => ['array'],
+            'thumbnails.*.type' => ['required', 'string'],
+            'thumbnails.*.width' => ['required', 'integer'],
+            'thumbnails.*.height' => ['required', 'integer'],
+
+            'thumbnails.*.urls' => ['array'],
+            'thumbnails.*.urls.*.url' => ['required', 'url'],
+            'thumbnails.*.urls.*.local_path' => ['nullable', 'string'],
         ];
     }
 }

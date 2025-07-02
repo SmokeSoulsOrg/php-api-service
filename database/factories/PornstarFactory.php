@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace Database\Factories;
 
 use App\Models\Pornstar;
 use Illuminate\Database\Eloquent\Factories\Factory;

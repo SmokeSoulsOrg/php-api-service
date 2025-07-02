@@ -25,14 +25,20 @@ class PornstarThumbnailController extends Controller
 
     public function store(StorePornstarThumbnailRequest $request): JsonResponse
     {
-        $thumbnail = PornstarThumbnail::create($request->validated());
+        $data = $request->validated();
 
-        return response()->api(
-            new PornstarThumbnailResource($thumbnail),
-            true,
-            'Thumbnail created successfully.',
-            201
-        );
+        $urls = $data['urls'] ?? [];
+        unset($data['urls']);
+
+        $thumbnail = PornstarThumbnail::create($data);
+
+        if (!empty($urls)) {
+            $thumbnail->urls()->createMany($urls);
+        }
+
+        $thumbnail->load('urls');
+
+        return response()->api(new PornstarThumbnailResource($thumbnail), true, 'Thumbnail created.', 201);
     }
 
     public function show(PornstarThumbnail $pornstarThumbnail): JsonResponse
@@ -48,13 +54,23 @@ class PornstarThumbnailController extends Controller
 
     public function update(UpdatePornstarThumbnailRequest $request, PornstarThumbnail $pornstarThumbnail): JsonResponse
     {
-        $pornstarThumbnail->update($request->validated());
+        $data = $request->validated();
 
-        return response()->api(
-            new PornstarThumbnailResource($pornstarThumbnail),
-            true,
-            'Thumbnail updated successfully.'
-        );
+        $urls = $data['urls'] ?? [];
+        unset($data['urls']);
+
+        $pornstarThumbnail->update($data);
+
+        // Replace nested urls if provided
+        // Could provide a merge or selective update if needed.
+        if (!empty($urls)) {
+            $pornstarThumbnail->urls()->delete();
+            $pornstarThumbnail->urls()->createMany($urls);
+        }
+
+        $pornstarThumbnail->load('urls');
+
+        return response()->api(new PornstarThumbnailResource($pornstarThumbnail), true, 'Thumbnail updated successfully.');
     }
 
     public function destroy(PornstarThumbnail $pornstarThumbnail): JsonResponse

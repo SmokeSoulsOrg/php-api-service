@@ -1,11 +1,11 @@
 <?php
 
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PornstarController;
 use App\Http\Controllers\PornstarAliasController;
+use App\Http\Controllers\PornstarController;
 use App\Http\Controllers\PornstarThumbnailController;
 use App\Http\Controllers\PornstarThumbnailUrlController;
+use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
     Route::apiResource('pornstars', PornstarController::class);

@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pornstar;
-use Illuminate\Http\Request;
 use App\Http\Requests\StorePornstarRequest;
 use App\Http\Requests\UpdatePornstarRequest;
 use App\Http\Resources\PornstarResource;
+use App\Models\Pornstar;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class PornstarController extends Controller
 {
@@ -25,14 +25,30 @@ class PornstarController extends Controller
 
     public function store(StorePornstarRequest $request): JsonResponse
     {
-        $pornstar = Pornstar::create($request->validated());
+        $data = $request->validated();
 
-        return response()->api(
-            new PornstarResource($pornstar),
-            true,
-            'Pornstar created successfully.',
-            201
-        );
+        $pornstar = Pornstar::create($data);
+
+        if (!empty($data['aliases'])) {
+            $pornstar->aliases()->createMany($data['aliases']);
+        }
+
+        if (!empty($data['thumbnails'])) {
+            foreach ($data['thumbnails'] as $thumbData) {
+                $urls = $thumbData['urls'] ?? [];
+                unset($thumbData['urls']);
+
+                $thumbnail = $pornstar->thumbnails()->create($thumbData);
+
+                if (!empty($urls)) {
+                    $thumbnail->urls()->createMany($urls);
+                }
+            }
+        }
+
+        $pornstar->load(['aliases', 'thumbnails.urls']);
+
+        return response()->api(new PornstarResource($pornstar), true, 'Pornstar created successfully.', 201);
     }
 
     public function show(Pornstar $pornstar): JsonResponse
@@ -48,14 +64,41 @@ class PornstarController extends Controller
 
     public function update(UpdatePornstarRequest $request, Pornstar $pornstar): JsonResponse
     {
-        $pornstar->update($request->validated());
+        $data = $request->validated();
 
-        return response()->api(
-            new PornstarResource($pornstar),
-            true,
-            'Pornstar updated successfully.'
-        );
+        $pornstar->update($data);
+
+        // Replace aliases if provided
+        if (isset($data['aliases'])) {
+            $pornstar->aliases()->delete();
+            $pornstar->aliases()->createMany($data['aliases']);
+        }
+
+        // Replace thumbnails and nested urls if provided.
+        // Could provide a merge or selective update if needed.
+        if (isset($data['thumbnails'])) {
+            $pornstar->thumbnails()->each(function ($thumbnail) {
+                $thumbnail->urls()->delete();
+                $thumbnail->delete();
+            });
+
+            foreach ($data['thumbnails'] as $thumbData) {
+                $urls = $thumbData['urls'] ?? [];
+                unset($thumbData['urls']);
+
+                $thumbnail = $pornstar->thumbnails()->create($thumbData);
+
+                if (!empty($urls)) {
+                    $thumbnail->urls()->createMany($urls);
+                }
+            }
+        }
+
+        $pornstar->load(['aliases', 'thumbnails.urls']);
+
+        return response()->api(new PornstarResource($pornstar), true, 'Pornstar updated successfully.');
     }
+
 
     public function destroy(Pornstar $pornstar): JsonResponse
     {
