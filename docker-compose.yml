@@ -20,7 +20,6 @@ services:
         volumes:
             - '.:/var/www/html'
             - './docker/laravel/init-migrate.sh:/init-migrate.sh'
-            - './docker/laravel/supervisord.conf:/etc/supervisord.conf'
         entrypoint: ["/init-migrate.sh"]
         networks:
             - sail

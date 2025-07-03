@@ -12,7 +12,7 @@ class PornstarFactory extends Factory
     public function definition(): array
     {
         return [
-            'external_id' => $this->faker->uuid,
+            'external_id' => $this->faker->unique()->uuid,
             'name' => $this->faker->name,
             'link' => $this->faker->url,
             'license' => 'REGULAR',

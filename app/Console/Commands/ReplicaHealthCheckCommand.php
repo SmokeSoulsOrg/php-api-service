@@ -5,11 +5,17 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Filesystem\Filesystem;
 
 class ReplicaHealthCheckCommand extends Command
 {
     protected $signature = 'replica:check';
     protected $description = 'Check if the MySQL replica is available and update .env accordingly';
+
+    public function __construct(protected Filesystem $files)
+    {
+        parent::__construct();
+    }
 
     public function handle(): int
     {
@@ -48,12 +54,12 @@ class ReplicaHealthCheckCommand extends Command
     {
         $envPath = base_path('.env');
 
-        if (!file_exists($envPath)) {
+        if (! $this->files->exists($envPath)) {
             $this->warn('⚠️ .env file not found.');
             return;
         }
 
-        $content = file_get_contents($envPath);
+        $content = $this->files->get($envPath);
         $desired = 'DB_USE_REPLICA=' . ($useReplica ? 'true' : 'false');
 
         if (preg_match('/^DB_USE_REPLICA=(.*)$/m', $content, $matches)) {
@@ -69,11 +75,10 @@ class ReplicaHealthCheckCommand extends Command
             $content .= "\n$desired\n";
         }
 
-        file_put_contents($envPath, $content);
+        $this->files->put($envPath, $content);
 
         $this->info("🔧 .env updated: $desired");
 
-        // Clear cached config to apply changes
         Artisan::call('config:clear');
         $this->info('🧹 Laravel config cache cleared.');
     }

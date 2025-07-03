@@ -17,7 +17,20 @@ class ResponseMacroServiceProvider extends ServiceProvider
                 int $status = 200,
                 array $errors = []
             ) {
-                return Response::json([
+                if (
+                    $data instanceof \Illuminate\Http\Resources\Json\ResourceCollection &&
+                    $data->resource instanceof \Illuminate\Pagination\AbstractPaginator
+                ) {
+                    // Merge the resource response directly and add custom keys
+                    $response = $data->toResponse(request())->getData(true);
+                    $response['success'] = $success;
+                    $response['message'] = $message;
+                    $response['errors'] = $errors;
+
+                    return response()->json($response, $status);
+                }
+
+                return response()->json([
                     'success' => $success,
                     'message' => $message,
                     'data'    => $data,
