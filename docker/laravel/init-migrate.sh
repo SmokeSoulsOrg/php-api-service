@@ -30,5 +30,13 @@ else
     echo "⚠️  $ENV_FILE not found!"
 fi
 
-echo "✅ Migrations complete. Starting Laravel server..."
-exec /usr/bin/supervisord -c /etc/supervisord.conf
+echo "✅ Migrations complete."
+
+# Final step: start Laravel server
+if [ -f /usr/local/bin/start-container ]; then
+    echo "🚀 Starting Laravel server..."
+    exec /usr/local/bin/start-container
+else
+    echo "❌ start-container script not found!"
+    exit 1
+fi
