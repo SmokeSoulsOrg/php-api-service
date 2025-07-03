@@ -19,11 +19,14 @@ services:
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
         volumes:
             - '.:/var/www/html'
+            - './docker/laravel/init-migrate.sh:/init-migrate.sh'
+            - './docker/laravel/supervisord.conf:/etc/supervisord.conf'
+        entrypoint: ["/init-migrate.sh"]
         networks:
             - sail
         depends_on:
             - mysql
-            - mysql_read
+#            - mysql_read
             - redis
 #            - meilisearch
 #            - mailpit
@@ -43,7 +46,7 @@ services:
             - 'sail-mysql:/var/lib/mysql'
             - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
             - './docker/mysql/conf.d/z-replication.cnf:/etc/mysql/conf.d/z-replication.cnf'
-            - './docker/mysql/init-replica-user.sql:/docker-entrypoint-initdb.d/90-init-replica-user.sql'
+            - './docker/mysql/init-replica-user.sql:/docker-entrypoint-initdb.d/99-init-replica-user.sql'
         networks:
             - sail
         healthcheck:
@@ -58,7 +61,7 @@ services:
         environment:
             MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
             MYSQL_ROOT_HOST: '${DB_HOST_READ}'
-            MYSQL_DATABASE: '${DB_READ_DATABASE}'
+            MYSQL_DATABASE: '${DB_DATABASE}'
             MYSQL_USER: '${DB_USERNAME}'
             MYSQL_PASSWORD: '${DB_PASSWORD}'
             MYSQL_ALLOW_EMPTY_PASSWORD: 1

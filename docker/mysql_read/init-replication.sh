@@ -8,6 +8,13 @@ MAX_RETRIES=60
 RETRY_DELAY=2
 COUNT=0
 
+# Wait until the migrations table exists on the master
+echo "🕒 Waiting for migrations to complete on master..."
+until mysql -h mysql -u root -ppassword -e "SELECT 1 FROM pornstar_db.migrations LIMIT 1;" >/dev/null 2>&1; do
+  echo "⏳ Migrations not ready on master..."
+  sleep $RETRY_DELAY
+done
+
 # Wait until the master MySQL server is available and responding to SHOW MASTER STATUS
 until MASTER_STATUS=$(mysql -h mysql -u root -ppassword -e "SHOW MASTER STATUS\G" 2>/dev/null); do
     echo "⏳ Waiting for SHOW MASTER STATUS to be available... ($COUNT/$MAX_RETRIES)"

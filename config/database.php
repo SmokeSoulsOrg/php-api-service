@@ -49,11 +49,10 @@ return [
                 'host' => [
                     env('DB_HOST_READ', 'mysql_read')],
             ] : null,
-            'write' => [
+            'write' => env('DB_USE_REPLICA', false) ? [
                 'host' => [
-                    env('DB_HOST_WRITE', 'mysql'),
-                ],
-            ],
+                    env('DB_HOST_WRITE', 'mysql')],
+            ] : null,
             'sticky' => true,
             'host' => env('DB_HOST', 'mysql'), // fallback
             'port' => env('DB_PORT', '3306'),
@@ -77,8 +76,8 @@ return [
             'url' => env('DB_URL'),
             'sticky' => true,
             'host' => env('DB_HOST_READ', 'mysql_read'), // fallback
-            'port' => env('FORWARD_DB_READ_PORT', '3307'),
-            'database' => env('DB_READ_DATABASE', 'pornstar_db_read'),
+            'port' => env('DB_PORT', '3306'),
+            'database' => env('DB_DATABASE', 'pornstar_db'),
             'username' => env('DB_USERNAME', 'sail'),
             'password' => env('DB_PASSWORD', 'password'),
             'unix_socket' => env('DB_SOCKET', ''),
