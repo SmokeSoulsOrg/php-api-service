@@ -54,20 +54,24 @@ class ReplicaHealthCheckCommand extends Command
         }
 
         $content = file_get_contents($envPath);
+        $desired = 'DB_USE_REPLICA=' . ($useReplica ? 'true' : 'false');
 
-        if (preg_match('/^DB_USE_REPLICA=.*/m', $content)) {
-            $content = preg_replace(
-                '/^DB_USE_REPLICA=.*/m',
-                'DB_USE_REPLICA=' . ($useReplica ? 'true' : 'false'),
-                $content
-            );
+        if (preg_match('/^DB_USE_REPLICA=(.*)$/m', $content, $matches)) {
+            $current = trim($matches[1]);
+
+            if ($current === ($useReplica ? 'true' : 'false')) {
+                $this->info('ℹ️  .env already contains correct DB_USE_REPLICA value.');
+                return;
+            }
+
+            $content = preg_replace('/^DB_USE_REPLICA=.*/m', $desired, $content);
         } else {
-            $content .= "\nDB_USE_REPLICA=" . ($useReplica ? 'true' : 'false') . "\n";
+            $content .= "\n$desired\n";
         }
 
         file_put_contents($envPath, $content);
 
-        $this->info('🔧 .env updated: DB_USE_REPLICA=' . ($useReplica ? 'true' : 'false'));
+        $this->info("🔧 .env updated: $desired");
 
         // Clear cached config to apply changes
         Artisan::call('config:clear');
