@@ -20,8 +20,8 @@ COPY . .
 RUN chown -R www-data:www-data /var/www/html \
     && chmod +x docker/laravel/init-migrate.sh
 
-# Install PHP deps
-RUN composer install --optimize-autoloader --no-dev
+# Install PHP dependencies
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
 USER root
 # Entrypoint: run init-migrate.sh
