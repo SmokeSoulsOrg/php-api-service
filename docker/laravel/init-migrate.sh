@@ -1,21 +1,26 @@
 #!/bin/bash
 
 set -e
-
 cd /var/www/html
 
-echo "⏳ Waiting for mysql to be ready..."
-until mysqladmin ping -h"mysql" -u"sail" -p"password" --silent; do
-  echo "  ...waiting for mysql"
+echo "🔑 Generating app key..."
+php artisan key:generate
+
+echo "📦 Caching config..."
+php artisan config:cache
+
+echo "⏳ Waiting for MySQL primary..."
+until mysqladmin ping -h"${DB_HOST}" -u"${DB_USERNAME}" -p"${DB_PASSWORD}" --silent; do
+  echo "  ...waiting for ${DB_HOST}"
   sleep 2
 done
 
 echo "🛠 Running migrations on primary..."
 php artisan migrate:fresh --database=mysql
 
-echo "⏳ Waiting for mysql_read to be ready..."
-until mysqladmin ping -h"mysql_read" -u"sail" -p"password" --silent; do
-  echo "  ...waiting for mysql_read"
+echo "⏳ Waiting for MySQL replica..."
+until mysqladmin ping -h"${DB_HOST_READ}" -u"${DB_USERNAME}" -p"${DB_PASSWORD}" --silent; do
+  echo "  ...waiting for ${DB_HOST_READ}"
   sleep 2
 done
 
@@ -30,13 +35,5 @@ else
     echo "⚠️  $ENV_FILE not found!"
 fi
 
-echo "✅ Migrations complete."
-
-# Final step: start Laravel server
-if [ -f /usr/local/bin/start-container ]; then
-    echo "🚀 Starting Laravel server..."
-    exec /usr/local/bin/start-container
-else
-    echo "❌ start-container script not found!"
-    exit 1
-fi
+echo "✅ Migrations complete. Starting PHP-FPM..."
+exec php-fpm
