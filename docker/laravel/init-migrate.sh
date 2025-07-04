@@ -16,8 +16,8 @@ echo "📦 Caching config..."
 php artisan config:cache
 
 echo "⏳ Waiting for MySQL primary..."
-until mysqladmin ping -h"${DB_HOST}" -u"${DB_USERNAME}" -p"${DB_PASSWORD}" --silent; do
-  echo "  ...waiting for ${DB_HOST}"
+until mysqladmin ping -h"mysql" -u"laravel" -p"password" --silent; do
+  echo "  ...waiting for mysql"
   sleep 2
 done
 
@@ -25,8 +25,8 @@ echo "🛠 Running migrations on primary..."
 php artisan migrate:fresh --force --database=mysql
 
 echo "⏳ Waiting for MySQL replica..."
-until mysqladmin ping -h"${DB_HOST_READ}" -u"${DB_USERNAME}" -p"${DB_PASSWORD}" --silent; do
-  echo "  ...waiting for ${DB_HOST_READ}"
+until mysqladmin ping -h"mysql_read" -u"laravel" -p"password" --silent; do
+  echo "  ...waiting for mysql_read"
   sleep 2
 done
 
