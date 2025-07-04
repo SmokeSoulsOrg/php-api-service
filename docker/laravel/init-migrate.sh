@@ -3,6 +3,9 @@
 set -e
 cd /var/www/html
 
+echo "🔧 Ensuring .env is writable..."
+chmod +w /var/www/html/.env || echo "⚠️  .env not writable and chmod failed"
+
 echo "🔑 Generating app key..."
 php artisan key:generate
 
