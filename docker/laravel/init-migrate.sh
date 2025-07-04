@@ -3,6 +3,12 @@
 set -e
 cd /var/www/html
 
+echo "🔧 Changing .env ownership to www-data"
+chown www-data:www-data /var/www/html/.env
+
+echo "🔧 Ensuring .env is writable..."
+chmod +w /var/www/html/.env || echo "⚠️  .env not writable and chmod failed"
+
 ENV_FILE=".env"
 
 if [ -f "$ENV_FILE" ]; then
@@ -14,12 +20,6 @@ if [ -f "$ENV_FILE" ]; then
 else
     echo "⚠️  $ENV_FILE not found before migrations!"
 fi
-
-echo "🔧 Changing .env ownership to www-data"
-chown www-data:www-data /var/www/html/.env
-
-echo "🔧 Ensuring .env is writable..."
-chmod +w /var/www/html/.env || echo "⚠️  .env not writable and chmod failed"
 
 echo "🔑 Generating app key..."
 php artisan key:generate
