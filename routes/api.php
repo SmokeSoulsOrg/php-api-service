@@ -1,6 +1,5 @@
 <?php
 
-
 use App\Http\Controllers\PornstarAliasController;
 use App\Http\Controllers\PornstarController;
 use App\Http\Controllers\PornstarThumbnailController;
