@@ -34,13 +34,13 @@ until mysqladmin ping -hmysql -ularavel -ppassword --silent; do
 done
 
 echo "🔎 Checking if primary DB is already migrated..."
-PRIMARY_TABLE_EXISTS=$(mysql -hmysql -ularavel -ppassword -D laravel -e "SHOW TABLES LIKE 'users';" | grep -c users)
+IS_PRIMARY_MIGRATED=$(mysql -hmysql -ularavel -ppassword -Dlaravel -e "SHOW TABLES LIKE 'migrations';" | grep -c migrations)
 
-if [ "$PRIMARY_TABLE_EXISTS" -eq 0 ]; then
-    echo "🛠 Running migrations on primary..."
-    php artisan migrate:fresh --force --database=mysql
+if [ "$IS_PRIMARY_MIGRATED" -eq 0 ]; then
+  echo "🛠 Running migrations on primary..."
+  php artisan migrate:fresh --force --database=mysql
 else
-    echo "✅ Primary schema already exists. Skipping migrations."
+  echo "✅ Primary DB already migrated. Skipping..."
 fi
 
 echo "⏳ Waiting for MySQL replica..."
@@ -50,13 +50,13 @@ until mysqladmin ping -hmysql_read -ularavel -ppassword --silent; do
 done
 
 echo "🔎 Checking if replica DB is already migrated..."
-REPLICA_TABLE_EXISTS=$(mysql -hmysql_read -ularavel -ppassword -D laravel -e "SHOW TABLES LIKE 'users';" | grep -c users)
+IS_REPLICA_MIGRATED=$(mysql -hmysql_read -ularavel -ppassword -Dlaravel -e "SHOW TABLES LIKE 'migrations';" | grep -c migrations)
 
-if [ "$REPLICA_TABLE_EXISTS" -eq 0 ]; then
-    echo "🛠 Running migrations on replica..."
-    php artisan migrate:fresh --force --database=mysql_read_direct
+if [ "$IS_REPLICA_MIGRATED" -eq 0 ]; then
+  echo "🛠 Running migrations on replica..."
+  php artisan migrate:fresh --force --database=mysql_read_direct
 else
-    echo "✅ Replica schema already exists. Skipping migrations."
+  echo "✅ Replica DB already migrated. Skipping..."
 fi
 
 if [ -f "$ENV_FILE" ]; then
@@ -69,5 +69,5 @@ else
     echo "⚠️  $ENV_FILE not found!"
 fi
 
-echo "✅ Migrations complete. Starting PHP-FPM..."
+echo "✅ Migrations complete. Starting PHP server..."
 exec php artisan serve --host=0.0.0.0 --port=9000
