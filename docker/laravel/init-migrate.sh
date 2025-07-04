@@ -37,7 +37,9 @@ ENV_FILE=".env"
 if [ -f "$ENV_FILE" ]; then
     echo "✅ Updating DB_USE_REPLICA=true in $ENV_FILE"
     TMP_FILE=$(mktemp)
-    sed 's/^DB_USE_REPLICA=.*/DB_USE_REPLICA=true/' "$ENV_FILE" > "$TMP_FILE" && mv "$TMP_FILE" "$ENV_FILE"
+    sed 's/^DB_USE_REPLICA=.*/DB_USE_REPLICA=true/' "$ENV_FILE" > "$TMP_FILE"
+    cp "$TMP_FILE" "$ENV_FILE"
+    rm "$TMP_FILE"
 else
     echo "⚠️  $ENV_FILE not found!"
 fi
