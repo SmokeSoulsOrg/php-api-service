@@ -150,4 +150,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ghcr.io/SmokeSoulsOrg/php-api-service:latest
+          tags: ghcr.io/smokesoulsorg/php-api-service:latest
