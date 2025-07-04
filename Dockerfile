@@ -22,6 +22,7 @@ RUN chown -R www-data:www-data /var/www/html \
 # Install PHP deps
 RUN composer install --optimize-autoloader --no-dev
 
+USER root
 # Entrypoint: run init-migrate.sh
 ENTRYPOINT ["./docker/laravel/init-migrate.sh"]
 
