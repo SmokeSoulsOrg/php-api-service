@@ -16,14 +16,19 @@ WORKDIR /var/www/html
 # Copy app files
 COPY . .
 
+# TEMP .env to allow composer to work
+COPY .env.example .env
+
 # Set permissions and make scripts executable
 RUN chown -R www-data:www-data /var/www/html \
     && chmod +x docker/laravel/init-migrate.sh
 
-# Install PHP dependencies
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+# Install PHP deps
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
-USER root
+# Drop privileges
+USER www-data
+
 # Entrypoint: run init-migrate.sh
 ENTRYPOINT ["./docker/laravel/init-migrate.sh"]
 
