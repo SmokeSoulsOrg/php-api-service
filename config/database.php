@@ -56,8 +56,8 @@ return [
             'sticky' => true,
             'host' => env('DB_HOST', 'mysql'), // fallback
             'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'pornstar_db'),
-            'username' => env('DB_USERNAME', 'sail'),
+            'database' => env('DB_DATABASE', 'laravel'),
+            'username' => env('DB_USERNAME', 'laravel'),
             'password' => env('DB_PASSWORD', 'password'),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
@@ -77,8 +77,8 @@ return [
             'sticky' => true,
             'host' => env('DB_HOST_READ', 'mysql_read'), // fallback
             'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'pornstar_db'),
-            'username' => env('DB_USERNAME', 'sail'),
+            'database' => env('DB_DATABASE', 'laravel'),
+            'username' => env('DB_USERNAME', 'laravel'),
             'password' => env('DB_PASSWORD', 'password'),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
