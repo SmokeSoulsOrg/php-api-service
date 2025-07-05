@@ -3,12 +3,10 @@
 namespace App\Jobs;
 
 use App\Models\Pornstar;
-use App\Models\PornstarAlias;
-use App\Models\PornstarThumbnail;
-use App\Models\PornstarThumbnailUrl;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class SyncPornstarFromMessage
 {
@@ -22,7 +20,7 @@ class SyncPornstarFromMessage
     }
 
     /**
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function handle(): void
     {

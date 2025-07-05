@@ -7,17 +7,17 @@ RUN apt-get update && apt-get install -y \
     default-mysql-client \
     && docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
+# Avoid Git "dubious ownership" errors inside container
+RUN git config --global --add safe.directory /var/www/html
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy app files
+# Copy application files
 COPY . .
-
-# TEMP .env to allow composer to work
-COPY .env.example .env
 
 # Set permissions and make scripts executable
 RUN chown -R www-data:www-data /var/www/html \
