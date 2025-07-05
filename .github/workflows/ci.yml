@@ -116,9 +116,13 @@ jobs:
         run: |
           composer analyze
 
-      - name: Run PHPCS
+#      - name: Run PHPCS
+#        run: |
+#          composer lint --standard=phpcs.xml
+
+      - name: Run Laravel Pint
         run: |
-          composer lint --standard=phpcs.xml
+          php artisan pint --test
 
   build-and-push:
     name: Build and Push Laravel Docker Image
