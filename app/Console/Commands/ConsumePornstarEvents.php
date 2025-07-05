@@ -41,7 +41,7 @@ class ConsumePornstarEvents extends Command
             }
 
             try {
-                new SyncPornstarFromMessage($data)->handle();
+                (new SyncPornstarFromMessage($data))->handle();
                 $this->info("✅ Synced pornstar ID {$data['id']}");
             } catch (\Throwable $e) {
                 $this->error("❌ Sync failed: " . $e->getMessage());

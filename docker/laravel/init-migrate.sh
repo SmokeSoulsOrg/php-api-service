@@ -56,7 +56,7 @@ else
 fi
 
 echo "✅ Migrations complete. Starting RabbitMQ consumer in background..."
-php artisan consume:pornstar-events &
+php artisan consume:pornstar-events > storage/logs/rabbitmq.log 2>&1 &
 
 echo "✅ Starting PHP-FPM..."
 exec php artisan serve --host=0.0.0.0 --port=9000
