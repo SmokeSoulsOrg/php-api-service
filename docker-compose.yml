@@ -18,8 +18,8 @@ services:
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
         volumes:
             - '.:/var/www/html'
-            - './docker/laravel/init-migrate.sh:/init-migrate.sh'
-        entrypoint: ["/init-migrate.sh"]
+#            - './docker/laravel/init-migrate.sh:/init-migrate.sh'
+#        entrypoint: ["/init-migrate.sh"]
         networks:
             - sail
         depends_on:
@@ -39,8 +39,8 @@ services:
         volumes:
             - 'sail-mysql:/var/lib/mysql'
             - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
-            - './docker/mysql/conf.d/z-replication.cnf:/etc/mysql/conf.d/z-replication.cnf'
-            - './docker/mysql/init-replica-user.sql:/docker-entrypoint-initdb.d/99-init-replica-user.sql'
+#            - './docker/mysql/conf.d/z-replication.cnf:/etc/mysql/conf.d/z-replication.cnf'
+#            - './docker/mysql/init-replica-user.sql:/docker-entrypoint-initdb.d/99-init-replica-user.sql'
         networks:
             - sail
         healthcheck:
@@ -61,9 +61,9 @@ services:
             MYSQL_ALLOW_EMPTY_PASSWORD: 1
         volumes:
             - 'sail-mysql-read:/var/lib/mysql'
-            - './docker/mysql_read/conf.d/z-replication.cnf:/etc/mysql/conf.d/z-replication.cnf'
-            - './docker/mysql_read/init-replication.sh:/docker-entrypoint-initdb.d/99-init-replication.sh'
-            - './docker/mysql_read/init-sail-user.sql:/docker-entrypoint-initdb.d/99-init-sail-user.sql'
+#            - './docker/mysql_read/conf.d/z-replication.cnf:/etc/mysql/conf.d/z-replication.cnf'
+#            - './docker/mysql_read/init-replication.sh:/docker-entrypoint-initdb.d/99-init-replication.sh'
+#            - './docker/mysql_read/init-sail-user.sql:/docker-entrypoint-initdb.d/99-init-sail-user.sql'
         networks:
             - sail
         healthcheck:

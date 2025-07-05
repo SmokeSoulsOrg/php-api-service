@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @method static \App\Models\Pornstar create(array $attributes)
+ * @method static \App\Models\Pornstar updateOrCreate(array $attributes, array $values = [])
  */
 class Pornstar extends Model
 {
