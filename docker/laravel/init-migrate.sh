@@ -55,6 +55,9 @@ else
     echo "⚠️  $ENV_FILE not found!"
 fi
 
-echo "✅ Migrations complete. Starting PHP-FPM..."
+echo "✅ Migrations complete. Starting RabbitMQ consumer in background..."
+php artisan consume:pornstar-events &
+
+echo "✅ Starting PHP-FPM..."
 exec php artisan serve --host=0.0.0.0 --port=9000
 
