@@ -24,14 +24,14 @@ class SyncPornstarFromMessage
      */
     public function handle(): void
     {
-        $attrs = $this->data;
+        DB::transaction(function () {
+            $attrs = $this->data;
 
-        DB::transaction(function () use ($attrs) {
             $pornstar = Pornstar::updateOrCreate(
                 ['external_id' => $attrs['id']],
                 [
                     'name' => $attrs['name'] ?? 'Unknown',
-                    'link' => $attrs['link'] ?? null,
+                    'link' => $attrs['link'] ?? 'https://example.com',
                     'license' => $attrs['license'] ?? null,
                     'wl_status' => $attrs['wlStatus'] ?? false,
 
@@ -57,15 +57,15 @@ class SyncPornstarFromMessage
                 ]
             );
 
-            // --- Sync Aliases ---
             if (isset($attrs['aliases']) && is_array($attrs['aliases'])) {
-                $pornstar->aliases()->delete();
+                $existingAliases = $pornstar->aliases()->pluck('alias')->toArray();
+                $newAliases = array_diff($attrs['aliases'], $existingAliases);
 
-                $aliasData = array_map(fn ($alias) => ['alias' => $alias], $attrs['aliases']);
-                $pornstar->aliases()->createMany($aliasData);
+                foreach ($newAliases as $alias) {
+                    $pornstar->aliases()->create(['alias' => $alias]);
+                }
             }
 
-            // --- Sync Thumbnails & URLs ---
             if (isset($attrs['thumbnails']) && is_array($attrs['thumbnails'])) {
                 foreach ($attrs['thumbnails'] as $thumbData) {
                     $thumbnail = $pornstar->thumbnails()->firstOrCreate([
@@ -74,24 +74,13 @@ class SyncPornstarFromMessage
                         'height' => $thumbData['height'] ?? null,
                     ]);
 
-                    // Handle URLs under this thumbnail
-                    if (!empty($thumbData['urls']) && is_array($thumbData['urls'])) {
-                        foreach ($thumbData['urls'] as $url) {
-                            $thumbnailUrl = $thumbnail->urls()->where('url', $url)->first();
-
-                            if ($thumbnailUrl) {
-                                // Update everything except local_path
-                                $thumbnailUrl->fill(['url' => $url]);
-                                $thumbnailUrl->save();
-                            } else {
-                                $thumbnail->urls()->create([
-                                    'url' => $url,
-                                ]);
-                            }
-                        }
+                    foreach ($thumbData['urls'] ?? [] as $url) {
+                        $thumbnail->urls()->firstOrCreate([
+                            'url' => $url,
+                        ]);
                     }
                 }
             }
-        });
+        }, 3); // Retry on deadlock
     }
 }

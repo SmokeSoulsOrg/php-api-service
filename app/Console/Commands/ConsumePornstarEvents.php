@@ -11,7 +11,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 class ConsumePornstarEvents extends Command
 {
     protected $signature = 'consume:pornstar-events';
-    protected $description = 'Consume pornstar metadata from RabbitMQ and store in database';
+    protected $description = 'Consume pornstar metadata from RabbitMQ and store in the database';
 
     /**
      * @throws Exception
@@ -36,19 +36,22 @@ class ConsumePornstarEvents extends Command
             $data = json_decode($msg->getBody(), true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                $this->error('❌ Invalid JSON payload: ' . json_last_error_msg());
+                $this->error('❌ Invalid JSON: ' . json_last_error_msg());
+                $msg->nack();
                 return;
             }
 
             try {
                 (new SyncPornstarFromMessage($data))->handle();
                 $this->info("✅ Synced pornstar ID {$data['id']}");
+                $msg->ack();
             } catch (\Throwable $e) {
                 $this->error("❌ Sync failed: " . $e->getMessage());
+                $msg->nack();
             }
         };
 
-        $channel->basic_consume($queue, '', false, true, false, false, $callback);
+        $channel->basic_consume($queue, '', false, false, false, false, $callback);
 
         while ($channel->is_consuming()) {
             $channel->wait();

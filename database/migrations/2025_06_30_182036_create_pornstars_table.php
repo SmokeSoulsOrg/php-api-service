@@ -26,7 +26,7 @@ return new class extends Migration
             $table->boolean('has_piercings')->nullable();
             $table->integer('breast_size')->nullable();
             $table->string('breast_type', 4)->nullable();
-            $table->string('gender', 16)->nullable();
+            $table->string('gender', 64)->nullable();
             $table->string('orientation', 16)->nullable();
             $table->integer('age')->nullable();
 
