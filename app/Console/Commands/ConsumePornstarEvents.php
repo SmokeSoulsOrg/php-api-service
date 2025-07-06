@@ -43,10 +43,14 @@ class ConsumePornstarEvents extends Command
 
             try {
                 (new SyncPornstarFromMessage($data))->handle();
-                $this->info("✅ Synced pornstar ID {$data['id']}");
+                $id = $data['id'] ?? '???';
+                $name = $data['name'] ?? 'Unknown';
+                $this->info("✅ Synced pornstar: {$name} [ID {$id}]");
                 $msg->ack();
             } catch (\Throwable $e) {
-                $this->error("❌ Sync failed: " . $e->getMessage());
+                $id = $data['id'] ?? '???';
+                $name = $data['name'] ?? 'Unknown';
+                $this->error("❌ Sync failed for {$name} [ID {$id}]: " . $e->getMessage());
                 $msg->nack();
             }
         };
