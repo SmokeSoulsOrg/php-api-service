@@ -38,6 +38,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Catch-all fallback for any other exception
         $exceptions->render(function (Throwable $e, Request $request) {
+            if (config('app.debug')) {
+                return response()->api(null, false, $e->getMessage(), 500, [
+                    'trace' => collect($e->getTrace())->take(5), // optional, limit trace
+                ]);
+            }
+
             return response()->api(null, false, 'Server error.', 500);
         });
     })->create();
