@@ -28,21 +28,7 @@ class ConsumeImageUpdateQueue extends Command
         $channel = $connection->channel();
         $queue = config('services.rabbitmq.image_update_queue', 'image-update');
 
-        // Declare main queue with DLX setup
-        $channel->queue_declare(
-            $queue,
-            false,
-            true,
-            false,
-            false,
-            false,
-            [
-                'x-dead-letter-exchange'    => ['S', ''],
-                'x-dead-letter-routing-key' => ['S', 'image-update-dead'],
-            ]
-        );
-
-        // Declare dead-letter queue
+        // Only declare dead-letter queue here; main queue is declared in the producer
         $channel->queue_declare('image-update-dead', false, true, false, false);
 
         $this->info("🟢 Listening for messages on '{$queue}'");
@@ -52,7 +38,7 @@ class ConsumeImageUpdateQueue extends Command
 
             if (!is_array($payload) || !isset($payload['url'], $payload['local_path'])) {
                 $this->error('❌ Invalid payload');
-                $msg->nack(false); // dead-letter it
+                $msg->nack(false); // send to DLX
                 return;
             }
 
@@ -67,7 +53,7 @@ class ConsumeImageUpdateQueue extends Command
                 $msg->ack();
             } else {
                 $this->warn("⚠️ No match for URL: {$url} → will be dead-lettered");
-                $msg->nack(false); // do not requeue, dead-letter instead
+                $msg->nack(false); // send to DLX
             }
         };
 
