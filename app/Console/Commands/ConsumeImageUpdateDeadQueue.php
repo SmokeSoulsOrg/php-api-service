@@ -8,10 +8,10 @@ use Illuminate\Console\Command;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-class ConsumeImageUpdateQueue extends Command
+class ConsumeImageUpdateDeadQueue extends Command
 {
-    protected $signature = 'consume:image-update';
-    protected $description = 'Consume image-update queue and update local_path for thumbnail URLs';
+    protected $signature = 'consume:image-update-dead';
+    protected $description = 'Re-consume the image-update-dead queue and retry setting local paths';
 
     /**
      * @throws Exception
@@ -26,33 +26,17 @@ class ConsumeImageUpdateQueue extends Command
         );
 
         $channel = $connection->channel();
-        $queue = config('services.rabbitmq.image_update_queue', 'image-update');
+        $queue = 'image-update-dead';
 
-        // Declare main queue with DLX setup
-        $channel->queue_declare(
-            $queue,
-            false,
-            true,
-            false,
-            false,
-            false,
-            [
-                'x-dead-letter-exchange'    => ['S', ''],
-                'x-dead-letter-routing-key' => ['S', 'image-update-dead'],
-            ]
-        );
-
-        // Declare dead-letter queue
-        $channel->queue_declare('image-update-dead', false, true, false, false);
-
-        $this->info("🟢 Listening for messages on '{$queue}'");
+        $channel->queue_declare($queue, false, true, false, false);
+        $this->info("🟠 Reprocessing messages from DLQ: {$queue}");
 
         $callback = function (AMQPMessage $msg) {
             $payload = json_decode($msg->getBody(), true);
 
             if (!is_array($payload) || !isset($payload['url'], $payload['local_path'])) {
-                $this->error('❌ Invalid payload');
-                $msg->nack(false); // dead-letter it
+                $this->error('❌ Invalid payload, dropping.');
+                $msg->ack(); // don't retry bad structure
                 return;
             }
 
@@ -63,12 +47,14 @@ class ConsumeImageUpdateQueue extends Command
 
             if ($thumbnail) {
                 $thumbnail->update(['local_path' => $path]);
-                $this->info("✅ Updated local_path for URL: {$url}");
-                $msg->ack();
+                $this->info("✅ Recovered: local_path set for {$url}");
             } else {
-                $this->warn("⚠️ No match for URL: {$url} → will be dead-lettered");
-                $msg->nack(false); // do not requeue, dead-letter instead
+                $this->warn("⚠️ Still missing: {$url}, will retry later");
+                $msg->nack(true); // requeue for future retry
+                return;
             }
+
+            $msg->ack();
         };
 
         $channel->basic_consume($queue, '', false, false, false, false, $callback);

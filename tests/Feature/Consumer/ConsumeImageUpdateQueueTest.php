@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\Consumer;
+namespace Feature\Consumer;
 
 use App\Models\PornstarThumbnailUrl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
