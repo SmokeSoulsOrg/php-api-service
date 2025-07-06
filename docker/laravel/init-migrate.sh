@@ -55,8 +55,9 @@ else
     echo "⚠️  $ENV_FILE not found!"
 fi
 
-echo "✅ Migrations complete. Starting RabbitMQ consumer in background..."
-php artisan consume:pornstar-events > storage/logs/rabbitmq-consumer.log 2>&1 &
+echo "✅ Migrations complete. Starting RabbitMQ consumers in background..."
+php artisan consume:pornstar-events > storage/logs/pornstar-events.log 2>&1 &
+php artisan consume:image-update > storage/logs/image-update.log 2>&1 &
 
 echo "✅ Starting Laravel dev server..."
 exec php artisan serve --host=0.0.0.0 --port=9000
