@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y \
     git curl zip unzip libpng-dev libonig-dev libxml2-dev \
     libzip-dev libpq-dev libjpeg-dev libfreetype6-dev \
     default-mysql-client \
-    && docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
+    && docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd sockets
 
 # Avoid Git "dubious ownership" errors inside container
 RUN git config --global --add safe.directory /var/www/html
