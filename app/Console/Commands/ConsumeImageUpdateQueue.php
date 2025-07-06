@@ -28,7 +28,7 @@ class ConsumeImageUpdateQueue extends Command
         $channel = $connection->channel();
         $queue = config('services.rabbitmq.image_update_queue', 'image-update');
 
-        // Only declare dead-letter queue here; main queue is declared in the producer
+        // Only declare DLQ here
         $channel->queue_declare('image-update-dead', false, true, false, false);
 
         $this->info("🟢 Listening for messages on '{$queue}'");
@@ -43,17 +43,20 @@ class ConsumeImageUpdateQueue extends Command
             }
 
             $url = $payload['url'];
+            $type = $payload['type'] ?? null;
             $path = $payload['local_path'];
 
-            $thumbnail = PornstarThumbnailUrl::where('url', $url)->first();
+            $thumbnail = PornstarThumbnailUrl::where('url', $url)
+                ->whereHas('thumbnail', fn($q) => $q->where('type', $type))
+                ->first();
 
             if ($thumbnail) {
                 $thumbnail->update(['local_path' => $path]);
-                $this->info("✅ Updated local_path for URL: {$url}");
+                $this->info("✅ Updated local_path for URL: {$url} [type: {$type}]");
                 $msg->ack();
             } else {
-                $this->warn("⚠️ No match for URL: {$url} → will be dead-lettered");
-                $msg->nack(false); // send to DLX
+                $this->warn("⚠️ No match for URL: {$url} [type: {$type}] → will be dead-lettered");
+                $msg->nack(false);
             }
         };
 

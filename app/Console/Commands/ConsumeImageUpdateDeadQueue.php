@@ -41,20 +41,21 @@ class ConsumeImageUpdateDeadQueue extends Command
             }
 
             $url = $payload['url'];
+            $type = $payload['type'] ?? null;
             $path = $payload['local_path'];
 
-            $thumbnail = PornstarThumbnailUrl::where('url', $url)->first();
+            $thumbnail = PornstarThumbnailUrl::where('url', $url)
+                ->whereHas('thumbnail', fn($q) => $q->where('type', $type))
+                ->first();
 
             if ($thumbnail) {
                 $thumbnail->update(['local_path' => $path]);
-                $this->info("✅ Recovered: local_path set for {$url}");
+                $this->info("✅ Recovered: local_path set for {$url} [type: {$type}]");
+                $msg->ack();
             } else {
-                $this->warn("⚠️ Still missing: {$url}, will retry later");
-                $msg->nack(true); // requeue for future retry
-                return;
+                $this->warn("⚠️ Still missing: {$url} [type: {$type}] → will retry later");
+                $msg->nack(true); // requeue
             }
-
-            $msg->ack();
         };
 
         $channel->basic_consume($queue, '', false, false, false, false, $callback);
