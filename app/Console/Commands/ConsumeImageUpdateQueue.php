@@ -11,7 +11,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 class ConsumeImageUpdateQueue extends Command
 {
     protected $signature = 'consume:image-update';
-    protected $description = 'Consume image-update queue and update local_path for thumbnail URLs';
+    protected $description = 'Consume image-update queue and update local_path for all matching thumbnail URLs';
 
     /**
      * @throws Exception
@@ -28,7 +28,7 @@ class ConsumeImageUpdateQueue extends Command
         $channel = $connection->channel();
         $queue = config('services.rabbitmq.image_update_queue', 'image-update');
 
-        // Only declare DLQ here
+        // Declare only the dead-letter queue; producer sets DLX
         $channel->queue_declare('image-update-dead', false, true, false, false);
 
         $this->info("🟢 Listening for messages on '{$queue}'");
@@ -43,21 +43,22 @@ class ConsumeImageUpdateQueue extends Command
             }
 
             $url = $payload['url'];
-            $type = $payload['type'] ?? null;
             $path = $payload['local_path'];
 
-            $thumbnail = PornstarThumbnailUrl::where('url', $url)
-                ->whereHas('thumbnail', fn($q) => $q->where('type', $type))
-                ->first();
+            $thumbnails = PornstarThumbnailUrl::where('url', $url)->get();
 
-            if ($thumbnail) {
-                $thumbnail->update(['local_path' => $path]);
-                $this->info("✅ Updated local_path for URL: {$url} [type: {$type}]");
-                $msg->ack();
-            } else {
-                $this->warn("⚠️ No match for URL: {$url} [type: {$type}] → will be dead-lettered");
-                $msg->nack(false);
+            if ($thumbnails->isEmpty()) {
+                $this->warn("⚠️ No matches for URL: {$url}");
+                $msg->nack(false); // send to DLX
+                return;
             }
+
+            foreach ($thumbnails as $thumb) {
+                $thumb->update(['local_path' => $path]);
+            }
+
+            $this->info("✅ Updated {$thumbnails->count()} entries for URL: {$url}");
+            $msg->ack();
         };
 
         $channel->basic_consume($queue, '', false, false, false, false, $callback);

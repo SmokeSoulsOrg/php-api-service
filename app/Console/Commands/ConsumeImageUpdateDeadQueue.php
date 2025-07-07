@@ -11,7 +11,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 class ConsumeImageUpdateDeadQueue extends Command
 {
     protected $signature = 'consume:image-update-dead';
-    protected $description = 'Re-consume the image-update-dead queue and retry setting local paths';
+    protected $description = 'Re-consume the image-update-dead queue and retry setting local_path for all matching thumbnail URLs';
 
     /**
      * @throws Exception
@@ -36,26 +36,27 @@ class ConsumeImageUpdateDeadQueue extends Command
 
             if (!is_array($payload) || !isset($payload['url'], $payload['local_path'])) {
                 $this->error('❌ Invalid payload, dropping.');
-                $msg->ack(); // don't retry bad structure
+                $msg->ack(); // don't retry malformed message
                 return;
             }
 
             $url = $payload['url'];
-            $type = $payload['type'] ?? null;
             $path = $payload['local_path'];
 
-            $thumbnail = PornstarThumbnailUrl::where('url', $url)
-                ->whereHas('thumbnail', fn($q) => $q->where('type', $type))
-                ->first();
+            $thumbnails = PornstarThumbnailUrl::where('url', $url)->get();
 
-            if ($thumbnail) {
-                $thumbnail->update(['local_path' => $path]);
-                $this->info("✅ Recovered: local_path set for {$url} [type: {$type}]");
-                $msg->ack();
-            } else {
-                $this->warn("⚠️ Still missing: {$url} [type: {$type}] → will retry later");
+            if ($thumbnails->isEmpty()) {
+                $this->warn("⚠️ Still missing: {$url}, will retry later");
                 $msg->nack(true); // requeue
+                return;
             }
+
+            foreach ($thumbnails as $thumb) {
+                $thumb->update(['local_path' => $path]);
+            }
+
+            $this->info("✅ Recovered: set local_path for {$thumbnails->count()} entries with URL: {$url}");
+            $msg->ack();
         };
 
         $channel->basic_consume($queue, '', false, false, false, false, $callback);
