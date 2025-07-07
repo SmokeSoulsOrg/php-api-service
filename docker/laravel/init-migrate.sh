@@ -55,6 +55,9 @@ else
     echo "⚠️  $ENV_FILE not found!"
 fi
 
+echo "🔗 Creating storage symlink..."
+php artisan storage:link
+
 echo "✅ Migrations complete. Starting RabbitMQ consumers in background..."
 php artisan consume:pornstar-events > storage/logs/pornstar-events.log 2>&1 &
 php artisan consume:image-update > storage/logs/image-update.log 2>&1 &
